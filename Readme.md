@@ -4,8 +4,6 @@ This project is an intelligent autoscaler for Kubernetes that uses Graph Attenti
 
 ## Solution Architecture
 
-![Architecture](docs/architecture.png) *(replace with the actual diagram)*
-
 The system consists of:
 1. **Metrics Collector** - receives data from Prometheus
 2. **GAT Model** - processes the metrics as a service dependency graph
