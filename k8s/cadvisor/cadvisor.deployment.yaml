@@ -1,0 +1,86 @@
+# cadvisor-final.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cadvisor
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: cadvisor
+  template:
+    metadata:
+      labels:
+        app: cadvisor
+    spec:
+      # Критически важные настройки
+      hostNetwork: true
+      hostPID: true
+      hostIPC: true
+      dnsPolicy: ClusterFirstWithHostNet
+      
+      # Отключаем автоматическое монтирование service account
+      automountServiceAccountToken: false
+      
+      tolerations:
+      - operator: Exists
+      
+      containers:
+      - name: cadvisor
+        image: gcr.io/cadvisor/cadvisor:v0.47.0
+        args:
+        - --housekeeping_interval=10s
+        - --disable_metrics=advtcp,disk,diskIO,memory_numa,process,referenced_memory,perf_event
+        - --disable_root_cgroup_stats=true  # Важно для Minikube
+        
+        ports:
+        - containerPort: 8080
+          hostPort: 8080
+          protocol: TCP
+          
+        securityContext:
+          privileged: true
+          runAsUser: 0
+          readOnlyRootFilesystem: false  # Разрешаем запись в rootfs
+          
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+          limits:
+            cpu: 500m
+            memory: 800Mi
+            
+        volumeMounts:
+        - name: rootfs
+          mountPath: /rootfs
+          readOnly: true
+        - name: var-run
+          mountPath: /var/run
+          readOnly: false  # Разрешаем запись
+        - name: sys
+          mountPath: /sys
+          readOnly: true
+        - name: docker
+          mountPath: /var/lib/docker
+          readOnly: true
+        - name: dev-kmsg
+          mountPath: /dev/kmsg
+          readOnly: true
+          
+      volumes:
+      - name: rootfs
+        hostPath:
+          path: /
+      - name: var-run
+        hostPath:
+          path: /var/run
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: docker
+        hostPath:
+          path: /var/lib/docker
+      - name: dev-kmsg
+        hostPath:
+          path: /dev/kmsg

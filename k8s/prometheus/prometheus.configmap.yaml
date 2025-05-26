@@ -1,0 +1,37 @@
+# prometheus-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+    - job_name: 'prometheus'
+      static_configs:
+      - targets: ['localhost:9090']
+    - job_name: 'kubernetes-apiservers'
+      kubernetes_sd_configs:
+      - role: endpoints
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: default;kubernetes;https
+ 
+    - job_name: 'standalone-cadvisor'
+      static_configs:
+      - targets: ['cadvisor:8080']
+
+    - job_name: 'nestjs-services'
+      metrics_path: '/metrics'
+      static_configs:
+        - targets:
+          - 'orders-service.default.svc.cluster.local:3002'
+          - 'payments-service.default.svc.cluster.local:3003'
+          - 'products-service.default.svc.cluster.local:3004'

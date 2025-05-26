@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoscaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoscaler
+  template:
+    metadata:
+      labels:
+        app: autoscaler
+    spec:
+      serviceAccountName: autoscaler-sa
+      containers:
+        - name: autoscaler
+          image: autoscaler:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PROMETHEUS_HOST
+              value: http://monitoring-kube-prometheus-prometheus.default:9090
